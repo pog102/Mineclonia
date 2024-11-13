@@ -1,6 +1,9 @@
 Source path,Source file,Target file,x1,y1,x2,y2,Blacklist
 /assets/minecraft/textures/gui,icons.png,crosshair.png,0,0,16,16,
-/assets/minecraft/textures/gui,icons.png,heart.png,52,0,9,9,
+/assets/minecraft/textures/gui/sprites/hud/heart,full.png,hudbars_icon_health.png,,,,,
+/assets/minecraft/textures/gui/sprites/hud/heart,container.png,hudbars_bgicon_health.png,,,,,
+/assets/minecraft/textures/gui/sprites/hud,food_full.png,hbhunger_icon.png,,,,,
+/assets/minecraft/textures/gui/sprites/hud,food_empty.png,hbhunger_bgicon.png,,,,,
 /assets/minecraft/textures/gui,icons.png,bubble.png,16,18,9,9,
 /assets/minecraft/textures/item,bucket.png,bucket.png,,,,,
 /assets/minecraft/textures/item,water_bucket.png,bucket_water.png,,,,,

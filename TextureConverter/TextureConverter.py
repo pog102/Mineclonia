@@ -15,10 +15,11 @@ base_dir = None
 dry_run = False
 forceDelete = False
 verbose = False
+output = False
 
 PXSIZE = 16
 
-syntax_help = appname+""" -i <input dir> [-s size] [-d] [-v] [-h] 
+syntax_help = appname+""" -i <input dir> [-s size] [-d] [-v] [-h] [-o]
 Mandatory argument:
 -i <input directory>
 	Directory of Minecraft resource pack to convert
@@ -32,10 +33,12 @@ Optional arguments:
 	(Verbose) Print out all copying actions of 1:1 textures.
 -f
 	(Force) Removes the existing converted pack foldfolder.
+-o
+    (Output) changes to ~/.minetest/textures folder
 -h
 	(Help) Show this help and exit"""
 try:
-	opts, args = getopt.getopt(sys.argv[1:],"hi:s:dvf")
+	opts, args = getopt.getopt(sys.argv[1:],"hi:s:dvfo")
 except getopt.GetoptError:
 	print(
 """ERROR! The options you gave me make no sense!
@@ -58,6 +61,8 @@ Syntax:""")
 		dry_run = True
 	elif opt == "-v":
 		verbose = True
+	elif opt == "-o":
+		output = True
 	elif opt == "-f":
 		forceDelete = True
 	elif opt == "-i":
@@ -85,7 +90,7 @@ pxScl = PXSIZE/16
 tex_dir = os.path.normpath(base_dir + "/assets/minecraft/textures")
 
 out_name = os.path.basename(base_dir) + '_Converted'
-out_dir = os.path.normpath(base_dir + '/../' + out_name)
+out_dir = os.path.normpath(os.path.expanduser("~/.minetest/textures/" + out_name)) if output else os.path.normpath(base_dir + '/../' + out_name)
 
 if os.path.isdir(out_dir):
 	if forceDelete:
@@ -93,11 +98,11 @@ if os.path.isdir(out_dir):
 	else:
 		print("\x1b[1;33mFolder already exists at output directory:\x1b[0m "+out_dir+"\nUse the \x1b[1;36m-f\x1b[0m flag to override.")
 		sys.exit(2)
-	
+
 
 # FUNCTION DEFINITIONS
 def colorize(colormap, source, colormap_pixel, texture_size, destination):
-	os.system("magick convert "+colormap+" -crop 1x1+"+colormap_pixel+" -depth 8 -resize "+texture_size+"x"+texture_size+" "+tempfile1.name+".png")
+	os.system("magick "+colormap+" -crop 1x1+"+colormap_pixel+" -depth 8 -resize "+texture_size+"x"+texture_size+" "+tempfile1.name+".png")
 	os.system("magick composite -compose Multiply "+tempfile1.name+".png "+source+" "+destination)
 
 def colorize_alpha(colormap, source, colormap_pixel, texture_size, destination):
@@ -149,7 +154,7 @@ def convert_textures_csv():
 			if xs != None:
 				# Crop and copy images
 				if not dry_run:
-					os.system("magick convert \""+src_file+"\" -crop "+xl+"x"+yl+"+"+xs+"+"+ys+" \""+dst_file+"\"")
+					os.system("magick \""+src_file+"\" -crop "+xl+"x"+yl+"+"+xs+"+"+ys+" \""+dst_file+"\"")
 				if verbose:
 					print(src_file + " → " + dst_file)
 			else:
@@ -182,33 +187,36 @@ def convert_armor():
 			helmet = "\""+adir + "/" + a[3]+"\""
 			chestplate = "\""+adir + "/" + a[4]+"\""
 			boots = "\""+adir + "/" + a[6]+"\""
-			os.system("magick convert -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none ( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +"+str(APXSIZE * 2)+"+0 -crop "+str(APXSIZE * 2)+"x"+str(APXSIZE)+"+0+0 ) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+helmet)
-			os.system("magick convert -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none ( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +"+str(APXSIZE)+"+"+str(APXSIZE)+" -crop "+str(APXSIZE * 2.5)+"x"+str(APXSIZE)+"+"+str(APXSIZE)+"+"+str(APXSIZE)+" ) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+chestplate)
-			os.system("magick convert -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none ( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +0+"+str(APXSIZE)+" -crop "+str(APXSIZE)+"x"+str(APXSIZE)+"+0+"+str(APXSIZE)+" ) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+boots)
+			os.system("magick -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none \\( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +"+str(APXSIZE * 2)+"+0 -crop "+str(APXSIZE * 2)+"x"+str(APXSIZE)+"+0+0 \\) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+helmet)
+			os.system("magick -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none \\( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +"+str(APXSIZE)+"+"+str(APXSIZE)+" -crop "+str(APXSIZE * 2.5)+"x"+str(APXSIZE)+"+"+str(APXSIZE)+"+"+str(APXSIZE)+" \\) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+chestplate)
+			os.system("magick -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none \\( "+layer_1+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +0+"+str(APXSIZE)+" -crop "+str(APXSIZE)+"x"+str(APXSIZE)+"+0+"+str(APXSIZE)+" \\) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+boots)
 		if os.path.isfile(layer_2):
 			leggings = adir + "/" + a[5]
-			os.system("magick convert -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none ( "+layer_2+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +0+"+str(APXSIZE)+" -crop "+str(APXSIZE * 2.5)+"x"+str(APXSIZE)+"+0+"+str(APXSIZE)+" ) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+leggings)
-	
+			os.system("magick -size "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" xc:none \\( "+layer_2+" -scale "+str(APXSIZE * 4)+"x"+str(APXSIZE * 2)+" -geometry +0+"+str(APXSIZE)+" -crop "+str(APXSIZE * 2.5)+"x"+str(APXSIZE)+"+0+"+str(APXSIZE)+" \\) -composite -channel A -fx \"(a > 0.0) ? 1.0 : 0.0\" "+leggings)
+
 	leather_armor = armor_files[0]
 
-	os.system(f"magick convert -size {PXSIZE*4}x{PXSIZE*2} xc:#A06540 {tempfile1.name}.png")
+	os.system(f"magick -size {PXSIZE*4}x{PXSIZE*2} xc:#A06540 {tempfile1.name}.png")
 
 	for i in range(3, len(leather_armor)):
-		os.system(f"magick convert {out_dir}/{leather_armor[i]} {tempfile1.name}.png -compose Multiply -composite {tempfile2.name}.png")
+		os.system(f"magick {out_dir}/{leather_armor[i]} {tempfile1.name}.png -compose Multiply -composite {tempfile2.name}.png")
 		os.system(f"magick composite -compose Dst_In {out_dir}/{leather_armor[i]} {tempfile2.name}.png -alpha Set {out_dir}/{leather_armor[i]}")
-	
+
 
 	leather_armor_items = ["mcl_armor_inv_helmet_leather.png", "mcl_armor_inv_chestplate_leather.png", "mcl_armor_inv_leggings_leather.png", "mcl_armor_inv_boots_leather.png"]
 	leather_armor_item_overlays = ["leather_helmet_overlay.png", "leather_chestplate_overlay.png", "leather_leggings_overlay.png", "leather_boots_overlay.png"]
-	os.system(f"magick convert -size {PXSIZE}x{PXSIZE} xc:#A06540 {tempfile1.name}.png")
-
+	os.system(f"magick -size {PXSIZE}x{PXSIZE} xc:#A06540 {tempfile1.name}.png")
+    # FIX: The overlay for leather isint working
 	for i, item in enumerate(leather_armor_items):
-		os.system(f"magick convert {out_dir}/{item} {tempfile1.name}.png -compose Multiply -composite {tempfile2.name}.png")
+		os.system(f"magick {out_dir}/{item} {tempfile1.name}.png -compose Multiply -composite {tempfile2.name}.png")
+		# os.system(f"imv {tempfile1.name}.png")
+		# os.system(f"imv {tempfile2.name}.png")
 		os.system(f"magick composite -compose Dst_In {out_dir}/{item} {tempfile2.name}.png -alpha Set {out_dir}/{item}")
+		# os.system(f"imv {out_dir}/{item}")
 		os.system(f"magick composite {tex_dir}/item/{leather_armor_item_overlays[i]} {out_dir}/{item} {out_dir}/{item}")
-		
 
-	
+
+
 
 
 def convert_rails():
@@ -224,7 +232,7 @@ def convert_rails():
 	]
 	for r in rails:
 		os.system("magick composite -compose dst-over "+tex_dir+"/block/"+r[0]+" "+tex_dir+"/block/"+r[1]+" "+out_dir+"/"+r[2])
-		os.system("magick convert "+tex_dir+"/block/"+r[0]+" -rotate 90 "+tempfile1.name+".png")
+		os.system("magick "+tex_dir+"/block/"+r[0]+" -rotate 90 "+tempfile1.name+".png")
 		os.system("magick composite -compose dst-over "+tempfile1.name+".png "+tex_dir+"/block/"+r[0]+" "+out_dir+"/"+r[3])
 
 def convert_banner_overlays():
@@ -275,11 +283,13 @@ def convert_banner_overlays():
 			if o == "mojang":
 				o = "thing"
 			dest = out_dir+"/"+"mcl_banners_"+o+".png"
-			os.system("magick convert "+orig+" -transparent-color white -background black -alpha remove -alpha copy -channel RGB -white-threshold 0 "+dest)
+			os.system("magick "+orig+" -transparent-color white -background black -alpha remove -alpha copy -channel RGB -white-threshold 0 "+dest)
 
 def convert_foliage():
-	FOLIAGE = tex_dir+"/colormap/foliage.png"
-	GRASS = tex_dir+"/colormap/grass.png"
+    # Some texture packs dont have a colormap folder
+    # Tested for Faitful texture pack
+	FOLIAGE = tex_dir+"/colormap/foliage.png"  if os.path.isfile(tex_dir+"/colormap/foliage.png") else "./colormap/foliage.png"
+	GRASS = tex_dir+"/colormap/grass.png"  if os.path.isfile(tex_dir+"/colormap/grass.png") else "./colormap/grass.png"
 
 
 	# Leaves
@@ -304,12 +314,10 @@ def convert_foliage():
 	colorize_alpha(GRASS, tex_dir+"/block/large_fern_top.png", pcol, str(PXSIZE), out_dir+"/mcl_flowers_double_plant_fern_inv.png")
 	colorize_alpha(GRASS, tex_dir+"/block/large_fern_bottom.png", pcol, str(PXSIZE), out_dir+"/mcl_flowers_double_plant_grass_inv.png")
 
-	os.system(f"convert {tex_dir}/block/grass_block_side_overlay.png -alpha extract -threshold 0 -negate -transparent white {tempfile1.name}.png")
-	os.system(f"magick convert {tex_dir}/block/grass_block_side.png ( {tempfile1.name}.png -colorspace gray -alpha off ) -compose copy-opacity -composite {out_dir}/mcl_dirt_grass_shadow.png")
-
+	os.system(f"{tex_dir}/block/grass_block_side_overlay.png -alpha extract -threshold 0 -negate -transparent white {tempfile1.name}.png")
+	os.system(f"magick {tex_dir}/block/grass_block_side.png ( {tempfile1.name}.png -colorspace gray -alpha off ) -compose copy-opacity -composite {out_dir}/mcl_dirt_grass_shadow.png")
 def convert_grass_palettes():
-	GRASS = tex_dir+"/colormap/grass.png"
-
+	GRASS = tex_dir+"/colormap/grass.png"  if os.path.isfile(tex_dir+"/colormap/grass.png") else "./colormap/grass.png"
 	# Convert grass palette: https://minecraft.fandom.com/wiki/Tint
 	grass_colors = [
 		# [Coords or #Color, AdditionalTint], # Index - Minecraft biome name (MineClone2 biome names)
@@ -346,18 +354,18 @@ def convert_grass_palettes():
 	]
 
 	grass_palette_file = out_dir + "/mcl_core_palette_grass.png"
-	os.system("magick convert -size 16x16 canvas:transparent " + grass_palette_file)
+	os.system("magick -size 16x16 canvas:transparent " + grass_palette_file)
 
 	for i, color in enumerate(grass_colors):
 		if color[0][0] == "#":
-			os.system("magick convert -size 1x1 xc:\"" + color[0] + "\" " + tempfile1.name + ".png")
+			os.system("magick -size 1x1 xc:\"" + color[0] + "\" " + tempfile1.name + ".png")
 		else:
-			os.system("magick convert " + GRASS + " -crop 1x1+" + color[0] + " " + tempfile1.name + ".png")
+			os.system("magick " + GRASS + " -crop 1x1+" + color[0] + " " + tempfile1.name + ".png")
 
 		if len(color) > 1:
-			os.system("magick convert " + tempfile1.name + ".png ( -size 1x1 xc:\"" + color[1] + "\" ) -compose blend -define compose:args=50,50 -composite " + tempfile1.name + ".png")
+			os.system("magick " + tempfile1.name + ".png ( -size 1x1 xc:\"" + color[1] + "\" ) -compose blend -define compose:args=50,50 -composite " + tempfile1.name + ".png")
 
-		os.system("magick convert " + grass_palette_file + " -set colorspace sRGB ( " + tempfile1.name + ".png -geometry +" + str(i % 16) + "+" + str(int(i / 16)) + " ) -composite " + grass_palette_file)
+		os.system("magick " + grass_palette_file + " -set colorspace sRGB \\( " + tempfile1.name + ".png -geometry +" + str(i % 16) + "+" + str(int(i / 16)) + " \\) -composite " + grass_palette_file)
 
 
 def translate_metadata():
@@ -371,12 +379,12 @@ description = {mcmeta['pack']['description']}"""
 	meta_file.write(meta)
 	meta_file.close()
 
-	os.system("magick convert -size 300x200 canvas:transparent \""+out_dir + "/screenshot.png\"")
+	os.system("magick -size 300x200 canvas:transparent \""+out_dir + "/screenshot.png\"")
 	os.system("magick composite \""+base_dir+"/pack.png\" \""+out_dir + "/screenshot.png\" -gravity center \""+out_dir + "/screenshot.png\"") #todo: account for res
 
 def convert_signs():
-	os.system("magick convert \""+tex_dir+"/item/oak_sign.png\" -set colorspace Gray   \""+out_dir+"/mcl_signs_default_sign_greyscale.png\"")
-	os.system("magick convert \""+tex_dir+"/entity/signs/oak.png\" -set colorspace Gray   \""+out_dir+"/mcl_signs_sign_greyscale.png\"")
+	os.system("magick \""+tex_dir+"/item/oak_sign.png\" -set colorspace Gray   \""+out_dir+"/mcl_signs_default_sign_greyscale.png\"")
+	os.system("magick \""+tex_dir+"/entity/signs/oak.png\" -set colorspace Gray   \""+out_dir+"/mcl_signs_sign_greyscale.png\"")
 
 def convert_sign_font():
 	ascii_file = tex_dir+"/font/ascii.png"
@@ -414,47 +422,18 @@ def convert_sign_font():
 		height = uv["y2"]
 		nwidth = px_uv(5)
 		if type(char) != int:
-			os.system(f"magick convert -size {nwidth}x{height} xc:transparent -define png:color-type=6 \"{out_dir}/{filename}\"")
-			os.system(f"magick convert \"{ascii_file}\" -crop {width}x{height}+{texturex}+{texturey} \"{tempfile1.name}.png\"")
+			os.system(f"magick -size {nwidth}x{height} xc:transparent -define png:color-type=6 \"{out_dir}/{filename}\"")
+			os.system(f"magick \"{ascii_file}\" -crop {width}x{height}+{texturex}+{texturey} \"{tempfile1.name}.png\"")
 			os.system(f"magick composite \"{tempfile1.name}.png\" \"{out_dir}/{filename}\" -gravity center \"{out_dir}/{filename}\"")
 		else:
-			os.system(f"magick convert \"{ascii_file}\" -crop {width}x{height}+{texturex}+{texturey} \"{out_dir}/{filename}\"")
+			os.system(f"magick \"{ascii_file}\" -crop {width}x{height}+{texturex}+{texturey} \"{out_dir}/{filename}\"")
 
 def convert_hud():
-	icons_file = tex_dir+"/gui/icons.png"
-
-	hud_icons = [
-		[
-			["hbarmor_bgicon.png", 16, 9, 9, 9],
-			["hbarmor_icon.png", 34, 9, 9, 9]
-		],
-		[
-			["hudbars_bgicon_health.png", 16, 0, 9, 9],
-			["hudbars_icon_health.png", 52, 0, 9, 9],
-			["hbhunger_icon_health_poison.png", 88, 0, 9, 9]
-		],
-		[
-			["hbhunger_bgicon.png", 16, 27, 9, 9],
-			["hbhunger_icon.png", 52, 27, 9, 9],
-			["mcl_hunger_icon_foodpoison.png", 88, 27, 9, 9]
-		]
-	]
-
-	for icon_set in hud_icons: #todo flip coords
-		bg = icon_set[0]
-		uv = uv_coords(bg[1], bg[2], bg[3], bg[4])
-		os.system(f"magick convert \"{icons_file}\" -crop {uv['x2']}x{uv['y2']}+{uv['x1']}+{uv['y1']} \"{out_dir}/{bg[0]}\"")
-
-		for i in range (1, len(icon_set)):
-			icon = icon_set[i]
-			uv = uv_coords(icon[1], icon[2], icon[3], icon[4])
-			os.system(f"magick convert \"{icons_file}\" -crop {uv['x2']}x{uv['y2']}+{uv['x1']}+{uv['y1']} \"{out_dir}/{icon[0]}\"")
-			os.system(f"magick composite -compose dst-over \"{out_dir}/{bg[0]}\" \"{out_dir}/{icon[0]}\" \"{out_dir}/{icon[0]}\"")
-	
-	os.system(f"magick convert \"{icons_file}\" -crop 182x5+0+64 -rotate 90 \"{out_dir}/mcl_experience_bar_background.png\"")
-	os.system(f"magick convert \"{icons_file}\" -crop 182x5+0+69 -rotate 90 \"{out_dir}/mcl_experience_bar.png\"")
-
-	os.system(f"magick convert \"{icons_file}\" -crop 16x16+0x0 -scale 300% \"{out_dir}/crosshair.png\"")
+	progress_bar = tex_dir+"/gui/sprites/hud/experience_bar_progress.png"
+	progress_bar_bg = tex_dir+"/gui/sprites/hud/experience_bar_background.png"
+	os.system(f"magick \"{progress_bar_bg}\"  -rotate 90 \"{out_dir}/mcl_experience_bar_background.png\"")
+	os.system(f"magick \"{progress_bar}\"  -rotate 90 \"{out_dir}/mcl_experience_bar.png\"")
+	# os.system(f"magick \"{icons_file}\" -scale 300% \"{out_dir}/crosshair.png\"")
 
 
 def patch_chests(): #todo double chests
@@ -512,21 +491,21 @@ def patch_chests(): #todo double chests
 	for single_chest in single_chests:
 		chest_path = "\""+out_dir+"/"+single_chest+"\""
 		for sec in chest_sections_single:
-			os.system(f"magick convert -crop {sec[0]}x{sec[1]}+{sec[2]}+{sec[3]} -rotate 180 {chest_path} {tempfile1.name}.png")
+			os.system(f"magick -crop {sec[0]}x{sec[1]}+{sec[2]}+{sec[3]} -rotate 180 {chest_path} {tempfile1.name}.png")
 			os.system(f"magick composite {tempfile1.name}.png -geometry +{sec[2]}+{sec[3]} {chest_path} {chest_path}")
-	
+
 	for double_chest in double_chests:
 		chest_path = "\""+out_dir+"/"+double_chest[2]+"\""
-		os.system(f"magick convert -size {128}x{64} xc:transparent -define png:color-type=6 {chest_path}")
+		os.system(f"magick -size {128}x{64} xc:transparent -define png:color-type=6 {chest_path}")
 
 		for sec in chest_sections_left:
-			os.system(f"magick convert -crop {sec[2]}x{sec[3]}+{sec[0]}+{sec[1]} -rotate {sec[6]} \"{tex_dir}/entity/chest/{double_chest[0]}\" {tempfile1.name}.png")
+			os.system(f"magick -crop {sec[2]}x{sec[3]}+{sec[0]}+{sec[1]} -rotate {sec[6]} \"{tex_dir}/entity/chest/{double_chest[0]}\" {tempfile1.name}.png")
 			os.system(f"magick composite {tempfile1.name}.png -geometry +{sec[4]}+{sec[5]} {chest_path} {chest_path}")
-		
+
 		for sec in chest_sections_right:
-			os.system(f"magick convert -crop {sec[2]}x{sec[3]}+{sec[0]}+{sec[1]} -rotate {sec[6]} \"{tex_dir}/entity/chest/{double_chest[1]}\" {tempfile1.name}.png")
+			os.system(f"magick -crop {sec[2]}x{sec[3]}+{sec[0]}+{sec[1]} -rotate {sec[6]} \"{tex_dir}/entity/chest/{double_chest[1]}\" {tempfile1.name}.png")
 			os.system(f"magick composite {tempfile1.name}.png -geometry +{sec[4]}+{sec[5]} {chest_path} {chest_path}")
-	
+
 
 def convert_villagers():
 	villagers = [
@@ -558,12 +537,12 @@ def convert_villagers():
 	os.system(f"magick composite {tex_dir}/entity/villager/type/plains.png {tex_dir}/entity/villager/villager.png {out_dir}/mobs_mc_villager.png")
 
 	for villager in villagers:
-		os.system(f"magick composite {out_dir}/{villager} {out_dir}/mobs_mc_villager.png {out_dir}/{villager}") 
+		os.system(f"magick composite {out_dir}/{villager} {out_dir}/mobs_mc_villager.png {out_dir}/{villager}")
 
-	os.system(f"magick convert {out_dir}/mobs_mc_zombie_villager.png -crop 16x16+44+22 {tempfile1.name}.png")
+	os.system(f"magick {out_dir}/mobs_mc_zombie_villager.png -crop 16x16+44+22 {tempfile1.name}.png")
 	os.system(f"magick composite -compose dst-over {tempfile1.name}.png -geometry +44+38 {out_dir}/mobs_mc_zombie_villager.png {out_dir}/mobs_mc_zombie_villager.png")
 	for villager in zombie_villagers:
-		os.system(f"magick composite {out_dir}/{villager} {out_dir}/mobs_mc_zombie_villager.png {out_dir}/{villager}") 
+		os.system(f"magick composite {out_dir}/{villager} {out_dir}/mobs_mc_zombie_villager.png {out_dir}/{villager}")
 
 def patch_doors():
 	doors = [
@@ -592,28 +571,28 @@ def patch_doors():
 		width = px_uv(3)
 
 		#door_sides_top
-		os.system(f"magick convert -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_sides_top}")
-		os.system(f"magick convert -crop {width}x{PXSIZE}+0+0 {door_top} \"{tempfile1.name}.png\"")
-		os.system(f"magick convert -crop {width}x{PXSIZE}+0+0 -flop {door_top} \"{tempfile2.name}.png\"")
+		os.system(f"magick -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_sides_top}")
+		os.system(f"magick -crop {width}x{PXSIZE}+0+0 {door_top} \"{tempfile1.name}.png\"")
+		os.system(f"magick -crop {width}x{PXSIZE}+0+0 -flop {door_top} \"{tempfile2.name}.png\"")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+0 {door_sides_top} {door_sides_top}")
 		os.system(f"magick composite {tempfile2.name}.png -geometry +{PXSIZE-width}+0 {door_sides_top} {door_sides_top}")
 
 		#door_sides_bottom
-		os.system(f"magick convert -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_sides_bottom}")
-		os.system(f"magick convert -crop {width}x{PXSIZE}+0+0 {door_bottom} \"{tempfile1.name}.png\"")
-		os.system(f"magick convert -crop {width}x{PXSIZE}+0+0 -flop {door_bottom} \"{tempfile2.name}.png\"")
+		os.system(f"magick -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_sides_bottom}")
+		os.system(f"magick -crop {width}x{PXSIZE}+0+0 {door_bottom} \"{tempfile1.name}.png\"")
+		os.system(f"magick -crop {width}x{PXSIZE}+0+0 -flop {door_bottom} \"{tempfile2.name}.png\"")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+0 {door_sides_bottom} {door_sides_bottom}")
 		os.system(f"magick composite {tempfile2.name}.png -geometry +{PXSIZE-width}+0 {door_sides_bottom} {door_sides_bottom}")
 
 		#door_side_upper
-		os.system(f"magick convert -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_side_upper}")
-		os.system(f"magick convert -crop {PXSIZE}x{width}+0+0 {door_top} \"{tempfile1.name}.png\"")
+		os.system(f"magick -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_side_upper}")
+		os.system(f"magick -crop {PXSIZE}x{width}+0+0 {door_top} \"{tempfile1.name}.png\"")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+0 {door_side_upper} {door_side_upper}")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+{PXSIZE-width} {door_side_upper} {door_side_upper}")
 
 		#door_side_lower
-		os.system(f"magick convert -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_side_lower}")
-		os.system(f"magick convert -crop {PXSIZE}x{width}+0+{PXSIZE-width} -flop {door_bottom} \"{tempfile1.name}.png\"")
+		os.system(f"magick -size {PXSIZE}x{PXSIZE} xc:transparent -define png:color-type=6 {door_side_lower}")
+		os.system(f"magick -crop {PXSIZE}x{width}+0+{PXSIZE-width} -flop {door_bottom} \"{tempfile1.name}.png\"")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+0 {door_side_lower} {door_side_lower}")
 		os.system(f"magick composite {tempfile1.name}.png -geometry +0+{PXSIZE-width} {door_side_lower} {door_side_lower}")
 
@@ -633,15 +612,15 @@ def progress_list(position):
 {progress_color(3, position)} Banner Overlay Textures\x1b[0m	{progress_color(11, position)} Patch Chest Textures\x1b[0m
 {progress_color(4, position)} Rail Textures\x1b[0m		{progress_color(12, position)} Villager Textures\x1b[0m
 {progress_color(5, position)} Foliage Textures\x1b[0m		{progress_color(13, position)} Patch Door Edges Textures\x1b[0m
-{progress_color(6, position)} Palette Textures\x1b[0m		
-{progress_color(7, position)} Translating Metadata\x1b[0m	
+{progress_color(6, position)} Palette Textures\x1b[0m
+{progress_color(7, position)} Translating Metadata\x1b[0m
 ''')
 
 def convert_textures():
 	global tempfile1, tempfile2
 	tempfile1 = tempfile.NamedTemporaryFile()
 	tempfile2 = tempfile.NamedTemporaryFile()
-	
+
 	print("\n\n\n\n\n\n\n\n\n\n")
 	progress_list(0)
 	convert_textures_csv()
@@ -675,7 +654,7 @@ def convert_textures():
 
 	if dry_run:
 		shutil.rmtree(out_dir)
-	
+
 	tempfile1.close()
 	tempfile2.close()
 

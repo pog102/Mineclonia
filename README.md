@@ -2,7 +2,7 @@
 <p align="center">
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Minetest_logo.svg/1200px-Minetest_logo.svg.png" alt="minetest logo" width="250"/>
  <br>
-    A compilation of my <a href="https://github.com/minetest/minetest">minetest</a> and <a href="https://git.minetest.land/MineClone2/MineClone2">mineclone2</a> tools and mods.
+    A compilation of <a href="https://github.com/minetest/minetest">minetest</a> and <a href="https://codeberg.org/mineclonia/mineclonia">mineclonia (fork of mineclone2)</a> tools and mods.
 </p>
 
 ### Tools
@@ -10,8 +10,8 @@
  - [Minecraft Font Installer for Minetest](#t-minecraft-fonts-for-minetest-auto-installer)
 <br><br>
 
-## [T] Minecraft to Minetest/Mineclone2 Texture Pack Converter
-This is an unofficial MineClone2 Texture Converter. This will convert textures from Minecraft resource packs (or default assets) to a Minetest texture pack.
+## [T] Minecraft to Minetest/Mineclonia Texture Pack Converter
+This is an unofficial MineClonia Texture Converter. This will convert textures from Minecraft resource packs (or default assets) to a Minetest texture pack.
 
 Supported Minecraft version: `1.20 (Java Edition)`
 ### Requirements
@@ -20,9 +20,9 @@ Supported Minecraft version: `1.20 (Java Edition)`
 <br><br>
 
 ### Usage
-Simply run `python TextureConverter.py -i <input dir>` and the converted texture pack will be produced in the same folder as the original pack.
+Simply run `python TextureConverter.py -i <input dir> -f -o` and the converted texture pack will be produced in the .minetest/textures folder.
 
-`python TextureConverter.py -i <input dir> [-h] [-s size] [-d] [-v]  [-f]`
+`python TextureConverter.py -i <input dir> [-h] [-s size] [-d] [-v]  [-f] [-o]`
 
 |Optional Parameter|Description|
 |--|--|
@@ -31,6 +31,7 @@ Simply run `python TextureConverter.py -i <input dir>` and the converted texture
 |-d|Dry run, don't create the texture pack but check files exist and dependencies.|
 |-v|Verbose, print out all copying actions of 1:1 textures.|
 |-f|Forces the removal of the existing converted pack folder.|
+|-o|changes to ~/.minetest/textures folder.|
 
 ### Known Issues
 This is a work-in-progress tool, and therefore has some known issues:
